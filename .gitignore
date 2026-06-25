@@ -1,2 +1,3 @@
 *.nix.bak*
 *.nix.bak
+*.lock
