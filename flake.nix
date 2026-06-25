@@ -17,7 +17,7 @@
       );
       usernameFromHome = builtins.elemAt parts 1;
     in {
-      homeConfigurations."${usernameFromHome}" =
+      homeConfigurations."caua" =
         home-manager.lib.homeManagerConfiguration {
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
           extraSpecialArgs = { inherit inputs; };

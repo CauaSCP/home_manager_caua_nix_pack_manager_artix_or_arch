@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 
 let
   unstable = import <unstable-pkgs> { 
@@ -8,7 +8,8 @@ in
 {
   # Outros perfis e imports
   imports = [
-  	../../../.nixGL/home-manager/other_home.nix
+    ../../../.nixGL/home-manager/other_home.nix
+    inputs.nixcord.homeManagerModules.nixcord
   ];
 
   home.username = "caua";
@@ -40,11 +41,6 @@ in
   home.packages = [
     # Chama o nosso pacote corrigido pelo overlay e passa para o nixGL
     (config.lib.nixGL.wrap unstable.pkgs.discord)
-  ];
-
-  ###
-  imports = [
-    inputs.nixcord.homeModules.nixcord
   ];
 
   programs.nixcord = {
