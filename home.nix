@@ -8,8 +8,8 @@ in
 {
   # Outros perfis e imports
   imports = [
-    ../../../.nixGL/home-manager/other_home.nix
-    inputs.nixcord.homeManagerModules.nixcord
+    ./.nixGL/home-manager/other_home.nix
+    inputs.nixcord.homeModules.nixcord
   ];
 
   home.username = "caua";
