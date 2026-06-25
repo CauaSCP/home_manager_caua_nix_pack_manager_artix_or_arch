@@ -1,7 +1,7 @@
-{ config, pkgs, inputs, unstable-pkgs, ... }: 
+{ config, pkgs, inputs, unstable-pkgs-unfree, unstable-pkgs, ... }: 
 
 let
-  unstable-pkgs-let-var = import <unstable-pkgs>;
+  unstable-pkgs-unfree-let = import <unstable-pkgs-unfree>;
 in
 {
   imports = [
@@ -13,7 +13,7 @@ in
   home.stateVersion = "25.11";
 
   home.packages = [
-    (config.lib.nixGL.wrap unstable-pkgs.discord)
+    (config.lib.nixGL.wrap unstable-pkgs-unfree.discord)
   ];
 
   programs.home-manager.enable = true;

@@ -12,26 +12,47 @@
     };
   };
 
-  outputs = { self, nixpkgs, unstable-pkgs, home-manager, ... }@inputs: {
-    homeConfigurations."caua" =
-      home-manager.lib.homeManagerConfiguration {
-        pkgs = import nixpkgs {
-          system = "x86_64-linux";
-          config.allowUnfree = true;
-        };
+  outputs = { self, nixgl, nixpkgs, unstable-pkgs, home-manager, ... }@inputs: 
+    let
+      path = builtins.toString ./.;
+      parts = builtins.filter (x: x != "") (builtins.split "/" path);
+      secondDir = builtins.elemAt parts 1;
 
-        extraSpecialArgs = {
-          inherit inputs;
-
-          unstable-pkgs = import unstable-pkgs {
+      # Define your variable here
+      username = secondDir;
+    in {
+      # Use ${username} to dynamically set the attribute name
+      homeConfigurations."${username}" =
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = import nixpkgs {
             system = "x86_64-linux";
             config.allowUnfree = true;
           };
-        };
 
-        modules = [
-          ./home.nix
-        ];
-      };
-  };
+          extraSpecialArgs = {
+            inherit inputs;
+
+            unstable-pkgs-unfree = import unstable-pkgs {
+              system = "x86_64-linux";
+              config.allowUnfree = true;
+            };
+
+            unstable-pkgs = import unstable-pkgs {
+              system = "x86_64-linux";
+              config.allowUnfree = false;
+            };
+
+            nixGlOutput = import nixgl {
+              pkgs = import nixpkgs {
+                system = "x86_64-linux";
+                config.allowUnfree = true;
+              };
+            };
+          };
+
+          modules = [
+            ./home.nix
+          ];
+        };
+    };
 }
