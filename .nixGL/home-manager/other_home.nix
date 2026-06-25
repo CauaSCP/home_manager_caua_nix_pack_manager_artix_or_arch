@@ -1,8 +1,21 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, unstable-pkgs-unfree, nixGlOutput, ... }:
 
 let
-  nixgl = import <nixgl> {};
-  nixGLWrapper = nixgl.auto.nixGLDefault;
+  nixgl-let-var = nixGlOutput;
+
+  nixGLNvidia = nixGlOutput.nixGLNvidia or pkgs.hello; # Fallbacks just in case
+  nixGLIntel  = nixGlOutput.nixGLIntel or pkgs.hello;
+  nixGLAMD    = nixGlOutput.nixVulkanAmd or pkgs.hello;
+
+  nixGLSwitcher = pkgs.writeShellScript "nixgl-switcher" ''
+    if lspci | grep -qi 'nvidia'; then
+      exec ${lib.getExe' nixGLNvidia "nixGLNvidia"} "$@"
+    elif lspci | grep -qiE 'amd|radeon' && lspci | grep -qi 'intel'; then
+      exec ${lib.getExe' nixGLAMD "nixVulkanAmd"} "$@"
+    else
+      exec ${lib.getExe' nixGLIntel "nixGLIntel"} "$@"
+    fi
+  '';
 
   # --- CONFIGURAÇÃO DO .unfrees.json COM FALLBACK ---
   targetUid = 1000;
@@ -32,9 +45,9 @@ let
 
   # --- ESPELHOS DE CONSULTA SEGUROS ---
   stableLookup = import <nixpkgs> { config = { allowUnfree = true; }; };
-  unstableLookup = if (builtins.tryEval <unstable-pkgs-let-var>).success 
-                   then import <unstable-pkgs-let-var> { config = { allowUnfree = true; }; }
-                   else stableLookup;
+  
+
+  unstableLookup = unstable-pkgs-unfree;
 
   checkPackageInRepo = repo: pkg: allowedAttr:
     builtins.hasAttr allowedAttr repo && (
@@ -73,9 +86,9 @@ let
       wrapped_bin=$out/bin/$bin_name
 
       if [ "$bin_name" = "kitty" ]; then
-        echo -e "#!/usr/bin/env bash\nexport HOME=${otherHomeDir}\nexec ${lib.getExe' nixGLWrapper "nixGL"} \"$bin\" --config ${otherHomeDir}/.config/kitty/kitty.conf \"\$@\"" > $wrapped_bin
+        echo -e "#!/usr/bin/env bash\nexport HOME=${otherHomeDir}\nexec ${nixGLSwitcher} \"$bin\" --config ${otherHomeDir}/.config/kitty/kitty.conf \"\$@\"" > $wrapped_bin
       else
-        echo -e "#!/usr/bin/env bash\nexec ${lib.getExe' nixGLWrapper "nixGL"} \"$bin\" \"\$@\"" > $wrapped_bin
+        echo -e "#!/usr/bin/env bash\nexec ${nixGLSwitcher} \"$bin\" \"\$@\"" > $wrapped_bin
       fi
 
       chmod +x $wrapped_bin
@@ -95,9 +108,7 @@ let
   guiNames = import ./gui-packages.nix;
   cliNames = import ./cli-packages.nix;
 
-  unstablePkgs = if (builtins.tryEval <unstable-pkgs-let-var>).success 
-                 then import <unstable-pkgs-let-var> { config = { allowUnfree = true; }; }
-                 else pkgs;
+  unstablePkgs = unstable-pkgs-unfree;
 
   # --- PROCESSADOR DE PACOTES COM FILTRO PURAMENTE EM BUILD-TIME ---
   processPackage = isGui: name:
