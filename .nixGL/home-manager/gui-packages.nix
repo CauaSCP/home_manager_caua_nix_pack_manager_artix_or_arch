@@ -1,0 +1,6 @@
+[
+  "kitty"
+  "appimage-run"
+  "gearlever"
+]
+
