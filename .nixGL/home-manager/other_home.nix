@@ -32,8 +32,8 @@ let
 
   # --- ESPELHOS DE CONSULTA SEGUROS ---
   stableLookup = import <nixpkgs> { config = { allowUnfree = true; }; };
-  unstableLookup = if (builtins.tryEval <unstable>).success 
-                   then import <unstable> { config = { allowUnfree = true; }; }
+  unstableLookup = if (builtins.tryEval <unstable-pkgs-let-var>).success 
+                   then import <unstable-pkgs-let-var> { config = { allowUnfree = true; }; }
                    else stableLookup;
 
   checkPackageInRepo = repo: pkg: allowedAttr:
@@ -95,8 +95,8 @@ let
   guiNames = import ./gui-packages.nix;
   cliNames = import ./cli-packages.nix;
 
-  unstablePkgs = if (builtins.tryEval <unstable>).success 
-                 then import <unstable> { config = { allowUnfree = true; }; }
+  unstablePkgs = if (builtins.tryEval <unstable-pkgs-let-var>).success 
+                 then import <unstable-pkgs-let-var> { config = { allowUnfree = true; }; }
                  else pkgs;
 
   # --- PROCESSADOR DE PACOTES COM FILTRO PURAMENTE EM BUILD-TIME ---

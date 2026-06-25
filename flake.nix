@@ -2,26 +2,36 @@
   description = "Home Manager configuration";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixgl.url = "github:nix-community/nixGL";
+    unstable-pkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixcord.url = "github:FlameFlag/nixcord";
   };
 
-  outputs = { nixpkgs, home-manager, nixcord, ... }@inputs:
-    let
-      parts = builtins.filter (x: x != "") (
-        builtins.split "/" (builtins.toString ./.)
-      );
-      usernameFromHome = builtins.elemAt parts 1;
-    in {
-      homeConfigurations."caua" =
-        home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          extraSpecialArgs = { inherit inputs; };
-          modules = [ ./home.nix ];
+  outputs = { self, nixpkgs, unstable-pkgs, home-manager, ... }@inputs: {
+    homeConfigurations."caua" =
+      home-manager.lib.homeManagerConfiguration {
+        pkgs = import nixpkgs {
+          system = "x86_64-linux";
+          config.allowUnfree = true;
         };
-    };
+
+        extraSpecialArgs = {
+          inherit inputs;
+
+          unstable-pkgs = import unstable-pkgs {
+            system = "x86_64-linux";
+            config.allowUnfree = true;
+          };
+        };
+
+        modules = [
+          ./home.nix
+        ];
+      };
+  };
 }
