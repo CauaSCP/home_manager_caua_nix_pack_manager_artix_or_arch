@@ -13,21 +13,21 @@
 
   outputs = { self, nixgl, nixpkgs, unstable-pkgs, home-manager, ... }@inputs: 
   let
-    # This runs in your shell, so it correctly gets "caua"
+    # 1. Define your variables here
     username = builtins.getEnv "USER";
+    system = "x86_64-linux";
   in {
     homeConfigurations.default = home-manager.lib.homeManagerConfiguration {
-      pkgs = import nixpkgs { system = "x86_64-linux"; config.allowUnfree = true; };
+      # 2. Use the system variable
+      pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
 
-      # PASS the username here!
       extraSpecialArgs = { 
         inherit inputs username; 
         
         unstable-pkgs-unfree = import unstable-pkgs {
-          system = "x86_64-linux";
+          inherit system;
           config.allowUnfree = true;
         };
-        # ... (rest of your extraSpecialArgs)
 
         unstable-pkgs = import unstable-pkgs {
           inherit system;
@@ -35,7 +35,7 @@
         };
 
         nixGlOutput = import nixgl {
-          inherit pkgs;
+          pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
         };
       };
 
