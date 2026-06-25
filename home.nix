@@ -1,15 +1,13 @@
-{ config, pkgs, inputs, unstable-pkgs-unfree, unstable-pkgs, ... }: 
+{ config, pkgs, inputs, unstable-pkgs-unfree, username, ... }: 
 
-let
-  unstable-pkgs-unfree-let = import <unstable-pkgs-unfree>;
-in
 {
   imports = [
     ./.nixGL/home-manager/other_home.nix
   ];
 
-  home.username = "caua";
-  home.homeDirectory = "/home/caua";
+  # Now these are dynamic and never hardcoded
+  home.username = username;
+  home.homeDirectory = "/home/${username}";
   home.stateVersion = "25.11";
 
   home.packages = [

@@ -1,9 +1,9 @@
-{ config, lib, pkgs, unstable-pkgs-unfree, nixGlOutput, ... }:
+{ config, lib, pkgs, nixGlOutput, unstable-pkgs-unfree, ... }:
 
 let
-  nixgl-let-var = nixGlOutput;
+  otherHomeDir = config.home.homeDirectory;
 
-  nixGLNvidia = nixGlOutput.nixGLNvidia or pkgs.hello; # Fallbacks just in case
+  nixGLNvidia = nixGlOutput.nixGLNvidia or pkgs.hello;
   nixGLIntel  = nixGlOutput.nixGLIntel or pkgs.hello;
   nixGLAMD    = nixGlOutput.nixVulkanAmd or pkgs.hello;
 
@@ -17,36 +17,15 @@ let
     fi
   '';
 
-  # --- CONFIGURAÇÃO DO .unfrees.json COM FALLBACK ---
-  targetUid = 1000;
-  
-  usersAttrs = config.users.users or config.osConfig.users.users or {};
-  usernames = builtins.attrNames usersAttrs;
-  
-  otherUsername = lib.findFirst 
-    (name: (usersAttrs.${name}.uid or null) == targetUid) 
-    "unknown-user"
-    usernames;
-
-  otherHomeDir = "/home/${otherUsername}";
+  # --- CONFIGURAÇÃO ---
   relativeFilePath = ".unfrees.json";
-
-  currentHomeDir = config.home.homeDirectory or (builtins.getEnv "HOME");
-  currentUserFile = "${currentHomeDir}/${relativeFilePath}";
-  fallbackUserFile = "${otherHomeDir}/${relativeFilePath}";
-
-  finalFilePath = if builtins.pathExists currentUserFile 
-                  then currentUserFile 
-                  else fallbackUserFile;
+  finalFilePath = "${otherHomeDir}/${relativeFilePath}";
 
   allowedUnfreeList = if builtins.pathExists finalFilePath
                       then (builtins.fromJSON (builtins.readFile finalFilePath)).allowed or []
                       else [];
 
-  # --- ESPELHOS DE CONSULTA SEGUROS ---
   stableLookup = import <nixpkgs> { config = { allowUnfree = true; }; };
-  
-
   unstableLookup = unstable-pkgs-unfree;
 
   checkPackageInRepo = repo: pkg: allowedAttr:
@@ -104,13 +83,13 @@ let
     fi
   '';
 
-  # --- LISTAS ORIGINAIS DE NOMES ---
+  # --- LISTAS DE PACOTES ---
   guiNames = import ./gui-packages.nix;
   cliNames = import ./cli-packages.nix;
 
   unstablePkgs = unstable-pkgs-unfree;
 
-  # --- PROCESSADOR DE PACOTES COM FILTRO PURAMENTE EM BUILD-TIME ---
+  # --- PROCESSADOR DE PACOTES ---
   processPackage = isGui: name:
     let
       rawPkg = if builtins.hasAttr name unstablePkgs then unstablePkgs.${name}
@@ -131,10 +110,7 @@ let
     in
       if isUnfree && !isAllowed then
         pkgs.runCommand "erro-unfree-${name}" {} ''
-          echo ""
-          echo "❌ [Erro] O pacote proprietário '${name}' requer uma licença unfree, mas não foi autorizado no seu arquivo '${relativeFilePath}'."
-          echo "👉 Adicione \"${name}\" na lista 'allowed' do seu JSON para permitir."
-          echo ""
+          echo "❌ O pacote '${name}' requer licença unfree. Adicione em ${relativeFilePath}."
           exit 1
         ''
       else
@@ -144,8 +120,6 @@ let
   processedGuiPackages = map (processPackage true) guiNames;
 
 in {
-  # Liberamos unfree globalmente na avaliação para desativar os erros nativos do Nixpkgs.
   nixpkgs.config.allowUnfree = true;
-
   home.packages = processedCliPackages ++ processedGuiPackages;
 }
