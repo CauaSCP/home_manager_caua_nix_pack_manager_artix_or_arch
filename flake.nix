@@ -10,11 +10,18 @@
     nixcord.url = "github:FlameFlag/nixcord";
   };
 
-  outputs = { nixpkgs, home-manager, nixcord, ... }@inputs: {
-    homeConfigurations."YOUR_USERNAME" = home-manager.lib.homeManagerConfiguration {
-      pkgs = nixpkgs.legacyPackages.x86_64-linux; # Change to aarch64-linux if you are on ARM
-      extraSpecialArgs = { inherit inputs; };
-      modules = [ ./home.nix ];
+  outputs = { nixpkgs, home-manager, nixcord, ... }@inputs:
+    let
+      parts = builtins.filter (x: x != "") (
+        builtins.split "/" (builtins.toString ./.)
+      );
+      usernameFromHome = builtins.elemAt parts 1;
+    in {
+      homeConfigurations."${usernameFromHome}" =
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          extraSpecialArgs = { inherit inputs; };
+          modules = [ ./home.nix ];
+        };
     };
-  };
 }
