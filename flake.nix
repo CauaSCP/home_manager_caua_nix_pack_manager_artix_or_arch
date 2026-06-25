@@ -13,42 +13,37 @@
 
   outputs = { self, nixgl, nixpkgs, unstable-pkgs, home-manager, ... }@inputs: 
     let
-      username = builtins.getEnv "USER";
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
     in {
-      homeConfigurations = if username == "" then 
-        throw "Could not determine username from environment variable $USER. Please set it."
-        else {
-          "${username}" = home-manager.lib.homeManagerConfiguration {
-            pkgs = import nixpkgs {
-              system = "x86_64-linux";
-              config.allowUnfree = true;
-            };
+      # By using 'default', we avoid hardcoding the username in the attribute path.
+      homeConfigurations.default = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
 
-            extraSpecialArgs = {
-              inherit inputs;
+        extraSpecialArgs = {
+          inherit inputs;
 
-              unstable-pkgs-unfree = import unstable-pkgs {
-                system = "x86_64-linux";
-                config.allowUnfree = true;
-              };
+          unstable-pkgs-unfree = import unstable-pkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
 
-              unstable-pkgs = import unstable-pkgs {
-                system = "x86_64-linux";
-                config.allowUnfree = false;
-              };
+          unstable-pkgs = import unstable-pkgs {
+            inherit system;
+            config.allowUnfree = false;
+          };
 
-              nixGlOutput = import nixgl {
-                pkgs = import nixpkgs {
-                  system = "x86_64-linux";
-                  config.allowUnfree = true;
-                };
-              };
-            };
-
-            modules = [
-              ./home.nix
-            ];
+          nixGlOutput = import nixgl {
+            inherit pkgs;
           };
         };
+
+        modules = [
+          ./home.nix
+        ];
+      };
     };
 }
