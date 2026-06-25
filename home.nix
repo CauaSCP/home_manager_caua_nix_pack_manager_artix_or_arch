@@ -45,19 +45,18 @@ in
 
   programs.nixcord = {
     enable = true;
-    vesktop.enable = true; # Using Vesktop client for better Vencord stability
+    ##vesktop.enable = true; # Using Vesktop client for better Vencord stability
     
     config = {
       useQuickCss = true;
       plugins = {
         volumeBooster.enable = true;
-        friendCorner.enable = true;
         shikiCodeblocks.enable = true;
       };
     };
   };
   /*
-
+        friendCorner.enable = true;
         fakeNitro.enable = true;
 
   */
